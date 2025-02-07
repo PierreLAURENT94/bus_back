@@ -41,6 +41,7 @@ class Test2Command extends Command
         $io->success('Ligne trouvée: ' . $ligne->getNomId());
         $arrets = $ligne->getArrets();
         $urls = [];
+        $noms = [];
         foreach ($arrets as $arret) {
             $io->text($arret->getNomId());
             $arretId = explode(':',  $arret->getNomId())[1];
@@ -48,10 +49,11 @@ class Test2Command extends Command
             $lineRef = rawurlencode("STIF:Line::" . $ligne->getNomId() . ":");
             $url = "https://prim.iledefrance-mobilites.fr/marketplace/stop-monitoring?MonitoringRef={$monitoringRef}&LineRef={$lineRef}";
             $urls[] = $url;
+            $noms[] = $arret->getNom();
         }
 
         while (true) {
-            foreach ($urls as $url) {
+            foreach ($urls as $index => $url) {
                 $options = [
                     'http' => [
                         'header' => "apikey: oVP6EMlvlVVABpXPwyglS8RepvnLVvkD\r\n" .
@@ -75,6 +77,7 @@ class Test2Command extends Command
                 $interval2 = $now->diff($prochainPassageDateTime2);
     
                 $io->writeln("");
+                $io->writeln($noms[$index]);
                 $io->writeln($ligne->getNom() . ' direction ' . $direction . ' : Prochain passage dans: ' . $interval->format('%i minutes %s secondes'));
                 $io->writeln($ligne->getNom() . ' direction ' . $direction2 . ' : Prochain passage dans: ' . $interval2->format('%i minutes %s secondes'));
                 $io->writeln("");

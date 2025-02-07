@@ -9,6 +9,10 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use App\Entity\Arret;
+use App\Entity\Ligne;
+use Doctrine\ORM\EntityManagerInterface;
+
 
 #[AsCommand(
     name: 'app:GetBusStops',
@@ -16,8 +20,9 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 )]
 class GetBusStopsCommand extends Command
 {
-    public function __construct()
+    public function __construct(EntityManagerInterface $entityManager)
     {
+        $this->entityManager = $entityManager;
         parent::__construct();
     }
 
@@ -111,15 +116,24 @@ class GetBusStopsCommand extends Command
             fclose($handle);
         }
 
+        // $ligneId = explode(':', $arret['id'])[1];
+        $ligne = $this->entityManager->getRepository(Ligne::class)->findOneBy(['nom' => "113"]);
+        
         // Afficher les arrêts dans l'ordre
         $io->title('Liste des arrêts de la ligne 113 :');
         foreach ($stopSequence as $stopId) {
+            // $io->info($stopId);
+            $arret = $this->entityManager->getRepository(Arret::class)->findOneBy(['nomId' => $stopId]);
+            $ligne->addArret($arret);
             if (isset($stops[$stopId])) {
                 $io->writeln($stops[$stopId]);
             } else {
                 $io->warning("Arrêt avec l'ID $stopId introuvé dans stops.txt.");
             }
+
         }
+        $this->entityManager->persist($ligne);
+        $this->entityManager->flush();
 
         return Command::SUCCESS;
 

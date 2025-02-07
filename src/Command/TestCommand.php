@@ -78,13 +78,13 @@ class TestCommand extends Command
         $arrets = json_decode($fileContent2, true);
         $i = 0;
         foreach ($arrets as $arret) {
-            if ($arret['stop_name'] == 'Pointe de Gournay'){
+            // if ($arret['stop_name'] == 'Pointe de Gournay'){
                 $arretEntity = new Arret();
                 $arretEntity->setNomId($arret['stop_id']);
                 $arretEntity->setNom($arret['stop_name']);
-                $ligneId = explode(':', $arret['id'])[1];
-                $ligne = $this->entityManager->getRepository(Ligne::class)->findOneBy(['nomId' => $ligneId]);
-                $arretEntity->addLigne($ligne);
+                // $ligneId = explode(':', $arret['id'])[1];
+                // $ligne = $this->entityManager->getRepository(Ligne::class)->findOneBy(['nomId' => $ligneId]);
+                // $arretEntity->addLigne($ligne);
 
                 $this->entityManager->persist($arretEntity);
                 $i++;
@@ -93,7 +93,7 @@ class TestCommand extends Command
                     $this->entityManager->clear();
                     $i = 0;
                 }
-            }
+            // }
         }
         $this->entityManager->flush();
 

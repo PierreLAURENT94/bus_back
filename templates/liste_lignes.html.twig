@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Liste des lignes{% endblock %}
+
+{% block body %}
+<div class="example-wrapper">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12">
+                <h1>Liste des lignes :</h1>
+            </div>
+        </div>
+        <div class="row">
+            
+                {% for ligne in lignes %}
+                    <div class="col-sm-1">
+                        <a href="{{ path('app_ligne', {'id': ligne.id}) }}">
+                            <mark style="font-size: xx-large;background-color: #{{ ligne.couleurHexa }};color: #{{ ligne.texteCouleurHexa }};">
+                                {{ ligne.nom }}
+                            </mark>
+                        </a>
+                    </div>
+                {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

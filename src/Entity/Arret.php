@@ -22,14 +22,14 @@ class Arret
     private ?string $nom = null;
 
     /**
-     * @var Collection<int, Ligne>
+     * @var Collection<int, LigneArret>
      */
-    #[ORM\ManyToMany(targetEntity: Ligne::class, inversedBy: 'arrets')]
-    private Collection $Lignes;
+    #[ORM\OneToMany(targetEntity: LigneArret::class, mappedBy: 'arret')]
+    private Collection $ligneArrets;
 
     public function __construct()
     {
-        $this->Lignes = new ArrayCollection();
+        $this->ligneArrets = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -62,25 +62,31 @@ class Arret
     }
 
     /**
-     * @return Collection<int, Ligne>
+     * @return Collection<int, LigneArret>
      */
-    public function getLignes(): Collection
+    public function getLigneArrets(): Collection
     {
-        return $this->Lignes;
+        return $this->ligneArrets;
     }
 
-    public function addLigne(Ligne $ligne): static
+    public function addLigneArret(LigneArret $ligneArret): static
     {
-        if (!$this->Lignes->contains($ligne)) {
-            $this->Lignes->add($ligne);
+        if (!$this->ligneArrets->contains($ligneArret)) {
+            $this->ligneArrets->add($ligneArret);
+            $ligneArret->setArret($this);
         }
 
         return $this;
     }
 
-    public function removeLigne(Ligne $ligne): static
+    public function removeLigneArret(LigneArret $ligneArret): static
     {
-        $this->Lignes->removeElement($ligne);
+        if ($this->ligneArrets->removeElement($ligneArret)) {
+            // set the owning side to null (unless already changed)
+            if ($ligneArret->getArret() === $this) {
+                $ligneArret->setArret(null);
+            }
+        }
 
         return $this;
     }

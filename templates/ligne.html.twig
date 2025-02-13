@@ -1,0 +1,124 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Bus {{ ligne.nom }}{% endblock %}
+
+{% block body %}
+<div class="example-wrapper">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12">
+                <h1>Bus {{ ligne.nom }}</h1>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="scroll" style="height: 100%; overflow-x: auto;border:5px solid #000000;background-color: #feeccd;">
+                    <canvas id="myCanvas" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    function plan(ele, busArray, stops, ligneColor, ligneNum) {
+        // Clear the canvas
+        var canvas = document.getElementById(ele);
+        var context = canvas.getContext('2d');
+        canvas.width = 90 + stops.length * 150;
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw "BUS 113" at the top left corner
+        context.fillStyle = ligneColor; // Text color
+        context.font = "35px Arial"; // Font style
+        context.globalAlpha = 0.5; // Set opacity to 50%
+        context.fillText("BUS "+ ligneNum, 10, 35); // Draw text
+        context.globalAlpha = 1; // Set opacity to 50%
+
+        // Draw a bus line
+        context.beginPath();
+        context.moveTo(10, 295); // Starting point
+        context.lineTo(10 + (stops.length -1) * 150, 295); // Ending point
+        context.strokeStyle = ligneColor; // Line color
+        context.lineWidth = 10; // Line width
+        context.stroke();
+        // Draw white rectangles every 50 pixels
+        for (var i = 0; i < stops.length; i++) {
+            var x = 10 + i * 150;
+            context.fillStyle = "#FFFFFF"; // Rectangle color
+            context.fillRect(x - 5, 290, 5, 10); // Draw rectangle
+            context.fillStyle = "#000000"; // Rectangle color
+            context.globalAlpha = 0.5; // Set opacity to 50%
+            context.fillRect(x - 4, 250, 3, 40); // Draw rectangle
+            context.globalAlpha = 1.0; // Reset opacity to 100%
+            context.fillStyle = "#000000"; // Text color
+            context.font = "20px Arial"; // Font style
+            context.save(); // Save the current context state
+            context.translate(x, 240); // Translate to the text position
+            context.rotate(-45 * Math.PI / 180); // Rotate 45 degrees counterclockwise
+            var maxLength = 30; // Maximum number of characters to display
+            var stopName = stops[i].length > maxLength ? stops[i].substring(0, maxLength) + "..." : stops[i];
+            context.fillText(stopName, 0, 0); // Draw text
+            context.restore(); // Restore the context to its original state
+        }
+
+        function drawBus(x, y, color) {
+            // Draw a bus
+            context.globalAlpha = 0.9; // Set opacity to 50%
+            context.fillStyle = "#02b59b"; // Bus color
+            context.fillRect(x, y, 50, 20); // Draw bus body
+            context.fillStyle = color; // Bus color
+            context.fillRect(x+20, y+1, 30, 2); // Draw bus body
+            context.globalAlpha = 1; // Set opacity to 50%
+
+
+            // Draw bus windows
+            context.fillStyle = "#aae0f9"; // Window color
+            context.fillRect(x + 5, y + 5, 10, 10); // First window
+            context.fillRect(x + 20, y + 5, 10, 10); // Second window
+            context.fillRect(x + 35, y + 5, 10, 10); // Third window
+
+            // feu
+            context.fillStyle = "#FFFF00"; // Window color
+            context.fillRect(x + 47.5, y + 15, 2.5, 5); // Third window
+            context.fillStyle = "#FF0000"; // Window color
+            context.fillRect(x, y + 15, 2.5, 5); // Third window
+
+            // Draw bus wheels
+            context.beginPath();
+            context.arc(x + 10, y + 22.5, 5, 0, 2 * Math.PI); // First wheel
+            context.arc(x + 40, y + 22.5, 5, 0, 2 * Math.PI); // Second wheel
+            context.fillStyle = "#000000"; // Wheel color
+            context.fill();
+        }
+
+        busArray.forEach(bus => {
+            drawBus(bus.x, bus.y, bus.color);
+        });
+    }
+    
+
+    var busArray = [
+        { x: 50, y: 262, color: "green" },
+        { x: 150, y: 262, color: "cyan" },
+        { x: 250, y: 262, color: "yellow" },
+        { x: 250, y: 262, color: "blue" },
+        { x: 450, y: 262, color: "red" }
+    ];
+    var stops = [
+        {% for arret in arrets %}
+            "{{ arret }}",
+        {% endfor %}
+    ];
+
+    function moveBuses() {
+        busArray.forEach(bus => {
+            bus.x += Math.floor(Math.random() * 4) ;
+        });
+        plan("myCanvas",busArray,stops, "#{{ ligne.couleurHexa }}", "{{ ligne.nom }}");
+    }
+
+    setInterval(moveBuses, 100);
+    plan("myCanvas",busArray,stops, "#{{ ligne.couleurHexa }}", "{{ ligne.nom }}");
+</script>
+</div>
+{% endblock %}

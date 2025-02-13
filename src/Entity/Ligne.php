@@ -2,10 +2,11 @@
 
 namespace App\Entity;
 
-use App\Repository\LigneRepository;
+use Doctrine\Common\Collections\Criteria;
+use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Doctrine\ORM\Mapping as ORM;
+use App\Repository\LigneRepository;
 
 #[ORM\Entity(repositoryClass: LigneRepository::class)]
 class Ligne
@@ -21,21 +22,21 @@ class Ligne
     #[ORM\Column(length: 255)]
     private ?string $nom = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $logo = null;
+    #[ORM\Column(length: 6)]
+    private ?string $couleurHexa = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $type = null;
+    #[ORM\Column(length: 6)]
+    private ?string $texteCouleurHexa = null;
 
     /**
-     * @var Collection<int, Arret>
+     * @var Collection<int, LigneArret>
      */
-    #[ORM\ManyToMany(targetEntity: Arret::class, mappedBy: 'Lignes')]
-    private Collection $arrets;
+    #[ORM\OneToMany(targetEntity: LigneArret::class, mappedBy: 'ligne')]
+    private Collection $ligneArrets;
 
     public function __construct()
     {
-        $this->arrets = new ArrayCollection();
+        $this->ligneArrets = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -51,7 +52,6 @@ class Ligne
     public function setNomId(string $nomId): static
     {
         $this->nomId = $nomId;
-
         return $this;
     }
 
@@ -63,56 +63,66 @@ class Ligne
     public function setNom(string $nom): static
     {
         $this->nom = $nom;
-
         return $this;
     }
 
-    public function getLogo(): ?string
+    public function getCouleurHexa(): ?string
     {
-        return $this->logo;
+        return $this->couleurHexa;
     }
 
-    public function setLogo(?string $logo): static
+    public function setCouleurHexa(string $couleurHexa): static
     {
-        $this->logo = $logo;
-
+        $this->couleurHexa = $couleurHexa;
         return $this;
     }
 
-    public function getType(): ?string
+    public function getTexteCouleurHexa(): ?string
     {
-        return $this->type;
+        return $this->texteCouleurHexa;
     }
 
-    public function setType(string $type): static
+    public function setTexteCouleurHexa(string $texteCouleurHexa): static
     {
-        $this->type = $type;
-
+        $this->texteCouleurHexa = $texteCouleurHexa;
         return $this;
     }
 
     /**
-     * @return Collection<int, Arret>
+     * @return Collection<int, LigneArret>
      */
-    public function getArrets(): Collection
+    public function getLigneArrets(): Collection
     {
-        return $this->arrets;
+        return $this->ligneArrets;
     }
 
-    public function addArret(Arret $arret): static
+    /**
+     * @return Collection<int, LigneArret>
+     */
+    public function getLigneArretsByOrdre(): Collection
     {
-        if (!$this->arrets->contains($arret)) {
-            $this->arrets->add($arret);
-            $arret->addLigne($this);
+        $criteria = Criteria::create()->orderBy(['ordre' => Criteria::ASC]);
+
+        return $this->ligneArrets->matching($criteria);
+    }
+
+    public function addLigneArret(LigneArret $ligneArret): static
+    {
+        if (!$this->ligneArrets->contains($ligneArret)) {
+            $this->ligneArrets->add($ligneArret);
+            $ligneArret->setLigne($this);
         }
 
         return $this;
     }
 
-    public function removeArret(Arret $arret): static
+    public function removeLigneArret(LigneArret $ligneArret): static
     {
-        if ($this->arrets->removeElement($arret)) {
-            $arret->removeLigne($this);
+        if ($this->ligneArrets->removeElement($ligneArret)) {
+            // set the owning side to null (unless already changed)
+            if ($ligneArret->getLigne() === $this) {
+                $ligneArret->setLigne(null);
+            }
         }
 
         return $this;

@@ -34,6 +34,9 @@ class Ligne
     #[ORM\OneToMany(targetEntity: LigneArret::class, mappedBy: 'ligne')]
     private Collection $ligneArrets;
 
+    #[ORM\Column]
+    private ?bool $initialisee = null;
+
     public function __construct()
     {
         $this->ligneArrets = new ArrayCollection();
@@ -124,6 +127,18 @@ class Ligne
                 $ligneArret->setLigne(null);
             }
         }
+
+        return $this;
+    }
+
+    public function isInitialisee(): ?bool
+    {
+        return $this->initialisee;
+    }
+
+    public function setInitialisee(bool $initialisee): static
+    {
+        $this->initialisee = $initialisee;
 
         return $this;
     }

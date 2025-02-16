@@ -15,7 +15,7 @@
                 {% for ligne in lignes %}
                     <div class="col-sm-1">
                         <a href="{{ path('app_ligne', {'id': ligne.id}) }}">
-                            <mark style="font-size: xx-large;background-color: #{{ ligne.couleurHexa }};color: #{{ ligne.texteCouleurHexa }};">
+                            <mark style="background-color: #{{ ligne.couleurHexa }};color: #{{ ligne.texteCouleurHexa }};">
                                 {{ ligne.nom }}
                             </mark>
                         </a>

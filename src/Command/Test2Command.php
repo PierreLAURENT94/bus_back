@@ -39,17 +39,17 @@ class Test2Command extends Command
         $io = new SymfonyStyle($input, $output);
         $ligne = $this->entityManager->getRepository(Ligne::class)->findOneBy(['nom' => "113"]);
         $io->success('Ligne trouvée: ' . $ligne->getNomId());
-        $arrets = $ligne->getArrets();
+        $ligneArrets = $ligne->getLigneArrets();
         $urls = [];
         $noms = [];
-        foreach ($arrets as $arret) {
-            $io->text($arret->getNomId());
-            $arretId = explode(':',  $arret->getNomId())[1];
+        foreach ($ligneArrets as $ligneArret) {
+            $io->text($ligneArret->getArret()->getNomId());
+            $arretId = explode(':',  $ligneArret->getArret()->getNomId())[1];
             $monitoringRef = rawurlencode("STIF:StopPoint:Q:" . $arretId . ":");
             $lineRef = rawurlencode("STIF:Line::" . $ligne->getNomId() . ":");
             $url = "https://prim.iledefrance-mobilites.fr/marketplace/stop-monitoring?MonitoringRef={$monitoringRef}&LineRef={$lineRef}";
             $urls[] = $url;
-            $noms[] = $arret->getNom();
+            $noms[] = $ligneArret->getArret()->getNom();
         }
 
         while (true) {

@@ -23,6 +23,14 @@ class LigneArret
     #[ORM\ManyToOne(inversedBy: 'ligneArrets')]
     private ?Arret $arret = null;
 
+    // Si null, alors l'arrêt n'est pas desservi dans cette direction
+    #[ORM\Column(nullable: true)]
+    private ?int $indexDirection1 = null;
+
+    // Si null, alors l'arrêt n'est pas desservi dans cette direction
+    #[ORM\Column(nullable: true)]
+    private ?int $indexDirection2 = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -60,6 +68,30 @@ class LigneArret
     public function setArret(?Arret $arret): static
     {
         $this->arret = $arret;
+
+        return $this;
+    }
+
+    public function getIndexDirection1(): ?int
+    {
+        return $this->indexDirection1;
+    }
+
+    public function setIndexDirection1(?int $indexDirection1): static
+    {
+        $this->indexDirection1 = $indexDirection1;
+
+        return $this;
+    }
+
+    public function getIndexDirection2(): ?int
+    {
+        return $this->indexDirection2;
+    }
+
+    public function setIndexDirection2(?int $indexDirection2): static
+    {
+        $this->indexDirection2 = $indexDirection2;
 
         return $this;
     }

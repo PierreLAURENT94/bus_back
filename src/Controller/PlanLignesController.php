@@ -13,7 +13,7 @@ final class PlanLignesController extends AbstractController
     #[Route("/", name: "app_liste_lignes")]
     public function listeLignes(LigneRepository $ligneRepository): Response
     {
-        $lignes = $ligneRepository->findAll();
+        $lignes = $ligneRepository->findBy([], ['nom' => 'ASC']);
 
         return $this->render("liste_lignes.html.twig", [
             "lignes" => $lignes
@@ -26,12 +26,14 @@ final class PlanLignesController extends AbstractController
         $arrets = [];
 
         foreach ($ligne->getLigneArretsByOrdre() as $ligneArret) {
-            $arrets[$ligneArret->getOrdre()] = $ligneArret->getArret()->getNom();
+            $arrets[$ligneArret->getId()] = $ligneArret->getArret()->getNom();
         }
+
+        ksort($arrets);
 
         return $this->render("ligne.html.twig", [
             "ligne" => $ligne,
-            "arrets" => array_unique($arrets)
+            "arrets" => $arrets
         ]);
     }
 }

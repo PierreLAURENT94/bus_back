@@ -55,6 +55,8 @@ class SetupGtfsCommand extends Command
             return Command::FAILURE;
         }
 
+        ini_set('memory_limit', '-1');
+
         // $this->ajoutDesLignesDeBus($io);
 
         // $this->ajoutDesArrets($io);
@@ -101,7 +103,8 @@ class SetupGtfsCommand extends Command
                 ->setNomId($ligne["route_id"])
                 ->setNom($ligne["route_short_name"])
                 ->setCouleurHexa($ligne["route_color"])
-                ->setTexteCouleurHexa($ligne["route_text_color"]);
+                ->setTexteCouleurHexa($ligne["route_text_color"])
+                ->setInitialisee(false);
 
             $this->entityManager->persist($ligneEntity);
 
@@ -257,7 +260,6 @@ class SetupGtfsCommand extends Command
     private function LinkDesLignesEtDesArrets2(SymfonyStyle $io): void
     {
         $jsonData = file_get_contents($this->gtfsChemin["arrets-lignes"]);
-        ini_set('memory_limit', '-1');
         $arretsLignes = json_decode($jsonData, true);
 
         $io->section("Associations des lignes et des arrets depuis le fichier JSON");
@@ -276,6 +278,10 @@ class SetupGtfsCommand extends Command
                 $ordre = count($ligne->getLigneArrets());
                 $ligneArret->setOrdre($ordre);
                 $this->entityManager->persist($ligneArret);
+                if ($arret->getVille() === null) {
+                    $arret->setVille($arretLigne["nom_commune"]);
+                    $this->entityManager->persist($arret);
+                }
             }
 
             if ($i++ > 1000) {
@@ -450,15 +456,27 @@ class SetupGtfsCommand extends Command
     function mergePaths($paths, $start, $end) {
         $graph = [];
         
-        // Construire le graphe avec des connexions bidirectionnelles
+        // Construire le graphe
         foreach ($paths as $path) {
             $path = array_unique($path); // Supprimer les doublons dans un même segment
             for ($i = 0; $i < count($path) - 1; $i++) {
-                $from = $path[$i];
-                $to = $path[$i + 1];
-                $graph[$from][$to] = 1;
-                $graph[$to][$from] = 1;
+            $from = $path[$i];
+            $to = $path[$i + 1];
+            $graph[$from][$to] = 1;
             }
+        }
+
+        $nodesWithSingleNeighbor = [];
+
+        foreach ($graph as $node => $neighbors) {
+            if (count($neighbors) === 1) {
+            $nodesWithSingleNeighbor[] = $node;
+            }
+        }
+
+        $io->info("Nodes that have only one neighbor:");
+        foreach ($nodesWithSingleNeighbor as $node) {
+            echo $node . "\n";
         }
         
         return $this->dijkstra($graph, $start, $end);

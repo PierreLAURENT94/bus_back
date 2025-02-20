@@ -13,6 +13,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\Ligne;
 use App\Repository\LigneRepository;
 use App\Repository\ArretRepository;
+use App\Service\LigneService;
 
 #[AsCommand(
     name: "app:setup-gtfs",
@@ -23,7 +24,7 @@ class SetupGtfsCommand extends Command
     private $gtfsChemin = [
         "routes" => "var/gtfs/routes.txt",
         "trips" => "var/gtfs/trips.txt",
-        "stop_times" => "var/gtfs/stop_times.txt",
+        "stop_times" => "var/gtfs/stop_times.txt", // LOAD DATA LOCAL INFILE "stop_times.txt" INTO TABLE stop_time FIELDS TERMINATED BY ',' ENCLOSED BY '\"' LINES TERMINATED BY '\n' IGNORE 1 LINES (trip_id, @dummy1, @dummy2, @dummy3, @dummy4, stop_id, stop_sequence, @dummy5, @dummy6, @dummy7, @dummy8, @dummy9, @dummy10, @dummy11);
         "stops" => "var/gtfs/stops.txt",
         "arrets-lignes" => "var/gtfs/arrets-lignes.json" // https://data.iledefrance-mobilites.fr/explore/dataset/arrets-lignes/
     ];
@@ -31,7 +32,8 @@ class SetupGtfsCommand extends Command
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly LigneRepository $ligneRepository,
-        private readonly ArretRepository $arretRepository
+        private readonly ArretRepository $arretRepository,
+        private readonly LigneService $ligneService
     ) {
         parent::__construct();
     }
@@ -65,7 +67,25 @@ class SetupGtfsCommand extends Command
 
         // $this->CleanEntityInutile($io);
 
-        $this->test($io);
+        $lignesAInitialiser = [
+            // [
+            //     "nom" => "113",
+            //     "depart" => "Nogent-sur-Marne",
+            //     "arrivee" => "Terre Ciel"
+            // ],
+            [
+                "nom" => "220",
+                "depart" => "Bry-sur-Marne",
+                "arrivee" => "Torcy"
+            ],
+            [
+                "nom" => "213",
+                "depart" => "Chelles",
+                "arrivee" => "Lognes"
+            ]
+        ];
+
+        $this->test($io, $lignesAInitialiser);
 
         return Command::SUCCESS;
     }
@@ -164,97 +184,6 @@ class SetupGtfsCommand extends Command
         $io->progressFinish();
 
         $io->info("Importation des arrets terminée");
-    }
-
-    private function LinkDesLignesEtDesArrets(SymfonyStyle $io): void
-    {
-        // Provisoirement ont prends les lignes 113 et 220 mais plus tard on prendra toutes les lignes
-        // $lignes = $this->ligneRepository->findAll();
-        $lignes = [];
-        $lignes[] = $this->ligneRepository->findOneBy(["nom" => "113"]);
-        $lignes[] = $this->ligneRepository->findOneBy(["nom" => "220"]);
-
-        $io->section("Associations des lignes et des arrets");
-
-        $io->warning("Provisoirement ont prends les lignes 113 et 220 mais plus tard on prendra toutes les lignes");
-
-        $io->progressStart(count($lignes));
-
-        foreach ($lignes as $ligne) {
-            $routeId = $ligne->getNomId();
-
-            // Lit le fichier trips.txt pour trouver les trip_id de la ligne
-
-            $tripIds = [];
-
-            $tripsStream = fopen($this->gtfsChemin["trips"], "r");
-
-            fgetcsv($tripsStream, 500, ","); // Lire l'en-tête
-
-            while ($data = fgetcsv($tripsStream, 500, ",")) {
-                if ($data[0] === $routeId) { // Colonne route_id
-                    $tripIds[] = $data[2]; // Colonne trip_id
-                }
-            }
-            fclose($tripsStream);
-
-            if (empty($tripIds)) {
-                // Aucun trajet trouvé pour la ligne
-                $io->progressAdvance();
-                continue;
-            }
-
-            $io->warning(count($tripIds) . " trajets trouvés pour la ligne " . $ligne->getNom());
-            $i = 0;
-            foreach ($tripIds as $tripId) {
-                if($i++ > 10) {
-                    break;
-                }
-                $io->warning($tripId);
-            }
-            
-
-            // Lit le fichier stop_times.txt pour trouver les arrêts dans l'ordre
-
-            $stopSequence = [];
-
-            $stopTimesStream = fopen($this->gtfsChemin["stop_times"], "r");
-
-            fgetcsv($stopTimesStream, 500, ","); // Lire l'en-tête
-
-            while ($data = fgetcsv($stopTimesStream, 500, ",")) {
-                if (in_array($data[0], $tripIds)) { // Colonne trip_id
-                    $stopSequence[$data[6]] = $data[5]; // stop_sequence => stop_id
-                }
-            }
-            fclose($stopTimesStream);
-
-            if (empty($stopSequence)) {
-                // Aucun arrêt trouvé pour les trajets de la ligne
-                $io->progressAdvance();
-                continue;
-            }
-
-            // Trier les arrêts par stop_sequence
-            ksort($stopSequence);
-
-            $i = 0;
-            foreach ($stopSequence as $stopId) {
-                $arret = $this->arretRepository->findOneBy(["nomId" => $stopId]);
-                $ligneArret = new LigneArret();
-                $ligneArret->setArret($arret);
-                $ligneArret->setLigne($ligne);
-                $ligneArret->setOrdre($i++);
-                $this->entityManager->persist($ligneArret);
-            }
-
-            $this->entityManager->flush();
-            $io->progressAdvance();
-        }
-
-        $io->progressFinish();
-
-        $io->info("Associations des lignes et des arrets terminée");
     }
 
     private function LinkDesLignesEtDesArrets2(SymfonyStyle $io): void
@@ -356,11 +285,14 @@ class SetupGtfsCommand extends Command
         $io->info("Suppression des arrêts sans lignes terminée");
     }
 
-    private function test($io): void
+    private function test($io, $lignesAInitialiser): void
     {
-        $ligne = $this->ligneRepository->findOneBy(["nom" => "220"]); // 113
+        $routeIds = [];
 
-        $routeId = $ligne->getNomId();
+        foreach ($lignesAInitialiser as $ligneAInitialiser) {
+            $ligneNomId = $this->ligneRepository->findOneBy(["nom" => $ligneAInitialiser["nom"]])->getNomId();
+            $routeIds[] = $ligneNomId;
+        }
 
         $tripIds = [];
 
@@ -368,22 +300,15 @@ class SetupGtfsCommand extends Command
 
         fgetcsv($tripsStream, 500, ","); // Lire l'en-tête
 
-        // $i = 0;
+        $routeIdsLink = [];
+
         while ($data = fgetcsv($tripsStream, 500, ",")) {
-            if ($data[0] === $routeId) { // Colonne route_id
+            if (in_array($data[0], $routeIds)) { // Colonne route_id
                 $tripIds[] = $data[2]; // Colonne trip_id
-                // if($i++ > 5) {
-                //     break;
-                // }
+                $routeIdsLink[$data[2]] = $data[0]; // trip_id => route_id
             }
         }
         fclose($tripsStream);
-
-        $io->warning(count($tripIds) . " trajets trouvés pour la ligne " . $ligne->getNom());
-        // foreach ($tripIds as $tripId) {
-        //     $io->warning($tripId);
-        // }
-
 
         $stopSequence = [];
 
@@ -393,127 +318,60 @@ class SetupGtfsCommand extends Command
 
         while ($data = fgetcsv($stopTimesStream, 500, ",")) {
             if (in_array($data[0], $tripIds)) { // Colonne trip_id
-                $stopSequence[$data[0]][$data[6]] = $data[5]; // trip_id => [stop_sequence => stop_id]
+                $stopSequence[$routeIdsLink[$data[0]]][$data[0]][$data[4]] = $data[3]; // trip_id => [stop_sequence => stop_id]
             }
         }
         fclose($stopTimesStream);
 
-        // Trier les arrêts par stop_sequence
-        // ksort($stopSequence);
+        foreach ($lignesAInitialiser as $ligneAInitialiser) {
+            $ligne = $this->ligneRepository->findOneBy(["nom" => $ligneAInitialiser["nom"]]);
+            $ligneNomId = $ligne->getNomId();
 
-        // Grouper les trips par ordre d’arrêts
-        $groupedTrips = [];
-        foreach ($stopSequence as $one) {
-            $key = implode('-', $one); // Création d'une clé unique pour comparer les séquences
-            $groupedTrips[$key] = $one;
-        }
+            // Grouper les trips par ordre d’arrêts
+            $groupedTrips = [];
+            foreach ($stopSequence[$ligneNomId] as $one) {
+                $key = implode('-', $one); // Création d'une clé unique pour comparer les séquences
+                $groupedTrips[$key] = $one;
+            }
 
-        // dump($stopSequence);
-        // dump($groupedTrips);
+            $paths = [];
+            foreach ($groupedTrips as $groupedTrip) {
+                $paths[] = array_values($groupedTrip);
+            }
 
-        $paths = [];
-        foreach ($groupedTrips as $groupedTrip) {
-            $paths[] = array_values($groupedTrip);
-        }
+            $ligneArretStart = array_values(array_filter($ligne->getLigneArrets()->toArray(), function($ligneArret) use ($ligneAInitialiser) {
+                return stripos($ligneArret->getArret()->getNom(), $ligneAInitialiser["depart"]) !== false;
+            }));
 
-        $ligneArretStart = array_values(array_filter($ligne->getLigneArrets()->toArray(), function($ligneArret) {
-            return stripos($ligneArret->getArret()->getNom(), 'Bry-sur-Marne') !== false; // Nogent-sur-Marne RER
-        }));
+            $ligneArretStop = array_values(array_filter($ligne->getLigneArrets()->toArray(), function($ligneArret) use ($ligneAInitialiser) {
+                return stripos($ligneArret->getArret()->getNom(), $ligneAInitialiser["arrivee"]) !== false;
+            }));
 
-        $ligneArretStop = array_values(array_filter($ligne->getLigneArrets()->toArray(), function($ligneArret) {
-            return stripos($ligneArret->getArret()->getNom(), 'Torcy') !== false; // Terre Ciel
-        }));
+            if (empty($ligneArretStart) || empty($ligneArretStop)) {
+                $io->error("Les arrêts de départ ou d'arrivée n'ont pas été trouvés.");
+                return;
+            }
 
-        if (empty($ligneArretStart) || empty($ligneArretStop)) {
-            $io->error("Les arrêts de départ ou d'arrivée n'ont pas été trouvés.");
-            return;
-        }
+            // Exécution de l'algorithme
+            $globalPath = $this->ligneService->mergePaths($paths, $ligneArretStart[0]->getArret()->getNomId(), $ligneArretStop[0]->getArret()->getNomId());
 
-        // Exécution de l'algorithme
-        $globalPath = $this->mergePaths($paths, $ligneArretStart[0]->getArret()->getNomId(), $ligneArretStop[0]->getArret()->getNomId());
+            // Exécution de l'algorithme sens inverse
+            $globalPathInverse = $this->ligneService->mergePaths($paths, $ligneArretStop[0]->getArret()->getNomId(), $ligneArretStart[0]->getArret()->getNomId());
 
-        // Exécution de l'algorithme sens inverse
-        $globalPathInverse = $this->mergePaths($paths, $ligneArretStop[0]->getArret()->getNomId(), $ligneArretStart[0]->getArret()->getNomId());
+            // Affichage du résultat
+            $io->info("Chemin sens 1 :\n");
 
-        // Affichage du résultat
-        $io->info("Chemin sens 1 :\n");
-        // dump(implode(" -> ", $globalPath));
+            foreach ($globalPath as $stopId) {
+                $arret = $this->arretRepository->findOneBy(["nomId" => $stopId]);
+                $io->write($arret->getNom() . " -> " );
+            }
 
-        foreach ($globalPath as $stopId) {
-            $arret = $this->arretRepository->findOneBy(["nomId" => $stopId]);
-            $io->write($arret->getNom() . " -> " );
-        }
+            $io->info("Chemin sens 2 :\n");
 
-        $io->info("Chemin sens 2 :\n");
-        // dump(implode(" -> ", $globalPath));
-
-        foreach ($globalPathInverse as $stopId) {
-            $arret = $this->arretRepository->findOneBy(["nomId" => $stopId]);
-            $io->write($arret->getNom() . " -> " );
-        }
-    }
-
-    function mergePaths($paths, $start, $end) {
-        $graph = [];
-        
-        // Construire le graphe
-        foreach ($paths as $path) {
-            $path = array_unique($path); // Supprimer les doublons dans un même segment
-            for ($i = 0; $i < count($path) - 1; $i++) {
-            $from = $path[$i];
-            $to = $path[$i + 1];
-            $graph[$from][$to] = 1;
+            foreach ($globalPathInverse as $stopId) {
+                $arret = $this->arretRepository->findOneBy(["nomId" => $stopId]);
+                $io->write($arret->getNom() . " -> " );
             }
         }
-
-        $nodesWithSingleNeighbor = [];
-
-        foreach ($graph as $node => $neighbors) {
-            if (count($neighbors) === 1) {
-            $nodesWithSingleNeighbor[] = $node;
-            }
-        }
-
-        $io->info("Nodes that have only one neighbor:");
-        foreach ($nodesWithSingleNeighbor as $node) {
-            echo $node . "\n";
-        }
-        
-        return $this->dijkstra($graph, $start, $end);
-    }
-
-    // Algorithme de Dijkstra pour trouver le chemin le plus court
-    function dijkstra($graph, $start, $end) {
-        $distances = [];
-        $previous = [];
-        $queue = new \SplPriorityQueue();
-        
-        foreach ($graph as $node => $neighbors) {
-            $distances[$node] = INF;
-            $previous[$node] = null;
-        }
-        $distances[$start] = 0;
-        $queue->insert($start, 0);
-        
-        while (!$queue->isEmpty()) {
-            $current = $queue->extract();
-            if ($current === $end) break;
-            
-            foreach ($graph[$current] as $neighbor => $cost) {
-                $alt = $distances[$current] + $cost;
-                if ($alt < $distances[$neighbor]) {
-                    $distances[$neighbor] = $alt;
-                    $previous[$neighbor] = $current;
-                    $queue->insert($neighbor, -$alt);
-                }
-            }
-        }
-    
-        $path = [];
-        for ($node = $end; $node !== null; $node = $previous[$node]) {
-            array_unshift($path, $node);
-        }
-        
-        return ($path[0] === $start) ? $path : [];
     }
 }

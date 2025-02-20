@@ -2,8 +2,13 @@
 
 namespace App\Service;
 
+use App\Repository\ArretRepository;
+
 class LigneService
 {
+    public function __construct(private readonly ArretRepository $arretRepository)
+    {
+    }
     public function mergePaths($paths, $start, $end) {
         $graph = [];
         
@@ -16,6 +21,19 @@ class LigneService
             $graph[$from][$to] = 1;
             }
         }
+
+        // // Générer le fichier .dot pour visualiser le graphe https://dreampuf.github.io/GraphvizOnline/?engine=dot
+        // $dotFileContent = "digraph G {\n";
+        // foreach ($graph as $from => $neighbors) {
+        //     foreach ($neighbors as $to => $cost) {
+        //     $fromName = $this->arretRepository->findOneBy(["nomId" => $from])->getNom();
+        //     $toName = $this->arretRepository->findOneBy(["nomId" => $to])->getNom();
+        //     $dotFileContent .= "    \"$fromName - $from\" -> \"$toName - $to\" [label=\"$cost\"];\n";
+        //     }
+        // }
+        // $dotFileContent .= "}\n";
+        
+        // file_put_contents('graph.dot', $dotFileContent);
         
         return $this->dijkstra($graph, $start, $end);
     }
@@ -29,6 +47,14 @@ class LigneService
         foreach ($graph as $node => $neighbors) {
             $distances[$node] = INF;
             $previous[$node] = null;
+
+            // Ajouter aussi les voisins dans les distances pour éviter des clés manquantes
+            foreach ($neighbors as $neighbor => $cost) {
+                if (!isset($distances[$neighbor])) {
+                    $distances[$neighbor] = INF;
+                    $previous[$neighbor] = null;
+                }
+            }
         }
         $distances[$start] = 0;
         $queue->insert($start, 0);

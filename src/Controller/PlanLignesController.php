@@ -13,7 +13,7 @@ final class PlanLignesController extends AbstractController
     #[Route("/", name: "app_liste_lignes")]
     public function listeLignes(LigneRepository $ligneRepository): Response
     {
-        $lignes = $ligneRepository->findBy([], ['nom' => 'ASC']);
+        $lignes = $ligneRepository->findBy(["initialisee" => true], ['nom' => 'ASC']);
 
         return $this->render("liste_lignes.html.twig", [
             "lignes" => $lignes

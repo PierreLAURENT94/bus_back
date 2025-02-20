@@ -13,6 +13,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\Ligne;
 use App\Repository\LigneRepository;
 use App\Repository\ArretRepository;
+use App\Repository\LigneArretRepository;
 use App\Service\LigneService;
 
 #[AsCommand(
@@ -33,7 +34,8 @@ class SetupGtfsCommand extends Command
         private readonly EntityManagerInterface $entityManager,
         private readonly LigneRepository $ligneRepository,
         private readonly ArretRepository $arretRepository,
-        private readonly LigneService $ligneService
+        private readonly LigneService $ligneService,
+        private readonly LigneArretRepository $ligneArretRepository
     ) {
         parent::__construct();
     }
@@ -68,11 +70,11 @@ class SetupGtfsCommand extends Command
         // $this->CleanEntityInutile($io);
 
         $lignesAInitialiser = [
-            // [
-            //     "nom" => "113",
-            //     "depart" => "Nogent-sur-Marne",
-            //     "arrivee" => "Terre Ciel"
-            // ],
+            [
+                "nom" => "113",
+                "depart" => "Nogent-sur-Marne",
+                "arrivee" => "Terre Ciel"
+            ],
             [
                 "nom" => "220",
                 "depart" => "Bry-sur-Marne",
@@ -80,8 +82,17 @@ class SetupGtfsCommand extends Command
             ],
             [
                 "nom" => "213",
-                "depart" => "Chelles",
-                "arrivee" => "Lognes"
+                "depart1" => "IDFM:424467", // Chelles - Gournay RER
+                "arrivee1" => "IDFM:463385", // Le Village #1
+                "depart2" => "IDFM:463386", // Le Village #2
+                "arrivee2" => "IDFM:424467" // Chelles - Gournay RER
+            ],
+            [
+                "nom" => "N34",
+                "depart1" => "IDFM:22801", // Gare de Lyon - Diderot
+                "arrivee1" => "IDFM:41446", // Gare de Torcy
+                "depart2" => "IDFM:41446", // Gare de Torcy
+                "arrivee2" => "IDFM:421409" // Gare de Lyon - Maison de la RATP
             ]
         ];
 
@@ -318,7 +329,8 @@ class SetupGtfsCommand extends Command
 
         while ($data = fgetcsv($stopTimesStream, 500, ",")) {
             if (in_array($data[0], $tripIds)) { // Colonne trip_id
-                $stopSequence[$routeIdsLink[$data[0]]][$data[0]][$data[4]] = $data[3]; // trip_id => [stop_sequence => stop_id]
+                $ligneId = $routeIdsLink[$data[0]];
+                $stopSequence[$ligneId][$data[0]][$data[6]] = $data[5]; // trip_id => [stop_sequence => stop_id]
             }
         }
         fclose($stopTimesStream);
@@ -339,39 +351,65 @@ class SetupGtfsCommand extends Command
                 $paths[] = array_values($groupedTrip);
             }
 
-            $ligneArretStart = array_values(array_filter($ligne->getLigneArrets()->toArray(), function($ligneArret) use ($ligneAInitialiser) {
-                return stripos($ligneArret->getArret()->getNom(), $ligneAInitialiser["depart"]) !== false;
-            }));
+            if (isset($ligneAInitialiser["depart"]) && isset($ligneAInitialiser["arrivee"])) {
+                $ligneArretStart = array_values(array_filter($ligne->getLigneArrets()->toArray(), function($ligneArret) use ($ligneAInitialiser) {
+                    return stripos($ligneArret->getArret()->getNom(), $ligneAInitialiser["depart"]) !== false;
+                }));
 
-            $ligneArretStop = array_values(array_filter($ligne->getLigneArrets()->toArray(), function($ligneArret) use ($ligneAInitialiser) {
-                return stripos($ligneArret->getArret()->getNom(), $ligneAInitialiser["arrivee"]) !== false;
-            }));
+                $ligneArretStop = array_values(array_filter($ligne->getLigneArrets()->toArray(), function($ligneArret) use ($ligneAInitialiser) {
+                    return stripos($ligneArret->getArret()->getNom(), $ligneAInitialiser["arrivee"]) !== false;
+                }));
 
-            if (empty($ligneArretStart) || empty($ligneArretStop)) {
-                $io->error("Les arrêts de départ ou d'arrivée n'ont pas été trouvés.");
-                return;
+                if (empty($ligneArretStart) || empty($ligneArretStop)) {
+                    $io->error("Les arrêts de départ ou d'arrivée n'ont pas été trouvés.");
+                    foreach ($ligne->getLigneArrets() as $ligneArret) {
+                        $io->writeln($ligneArret->getArret()->getNom());
+                    }
+                    return;
+                }
             }
 
-            // Exécution de l'algorithme
-            $globalPath = $this->ligneService->mergePaths($paths, $ligneArretStart[0]->getArret()->getNomId(), $ligneArretStop[0]->getArret()->getNomId());
+            if(isset($ligneAInitialiser["arrivee1"]) && isset($ligneAInitialiser["arrivee2"]) && isset($ligneAInitialiser["depart1"]) && isset($ligneAInitialiser["depart2"])){
+                // Exécution de l'algorithme
+                $globalPath = $this->ligneService->mergePaths($paths, $ligneAInitialiser["depart1"], $ligneAInitialiser["arrivee1"]);
 
-            // Exécution de l'algorithme sens inverse
-            $globalPathInverse = $this->ligneService->mergePaths($paths, $ligneArretStop[0]->getArret()->getNomId(), $ligneArretStart[0]->getArret()->getNomId());
+                // Exécution de l'algorithme sens inverse
+                $globalPathInverse = $this->ligneService->mergePaths($paths, $ligneAInitialiser["depart2"], $ligneAInitialiser["arrivee2"]);
+            } else {
+                // Exécution de l'algorithme
+                $globalPath = $this->ligneService->mergePaths($paths, $ligneArretStart[0]->getArret()->getNomId(), $ligneArretStop[0]->getArret()->getNomId());
+
+                // Exécution de l'algorithme sens inverse
+                $globalPathInverse = $this->ligneService->mergePaths($paths, $ligneArretStop[0]->getArret()->getNomId(), $ligneArretStart[0]->getArret()->getNomId());
+            }
 
             // Affichage du résultat
-            $io->info("Chemin sens 1 :\n");
 
+            $io->info($ligne->getNom() . " - Direction 1 :\n");
+            $i = 0;
             foreach ($globalPath as $stopId) {
                 $arret = $this->arretRepository->findOneBy(["nomId" => $stopId]);
+                $ligneArret = $this->ligneArretRepository->findOneBy(["arret" => $arret, "ligne" => $ligne]);
+                $ligneArret->setIndexDirection1($i++);
+                $this->entityManager->persist($ligneArret);
                 $io->write($arret->getNom() . " -> " );
             }
+            $this->entityManager->flush();
 
-            $io->info("Chemin sens 2 :\n");
-
+            $io->info($ligne->getNom() . " - Direction 2 :\n");
+            $i = 0;
             foreach ($globalPathInverse as $stopId) {
                 $arret = $this->arretRepository->findOneBy(["nomId" => $stopId]);
+                $ligneArret = $this->ligneArretRepository->findOneBy(["arret" => $arret, "ligne" => $ligne]);
+                $ligneArret->setIndexDirection2($i++);
+                $this->entityManager->persist($ligneArret);
                 $io->write($arret->getNom() . " -> " );
             }
+            $this->entityManager->flush();
+
+            $ligne->setInitialisee(true);
+            $this->entityManager->persist($ligne);
+            $this->entityManager->flush();
         }
     }
 }

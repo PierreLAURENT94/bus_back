@@ -13,7 +13,7 @@ final class PlanLignesController extends AbstractController
     #[Route("/", name: "app_liste_lignes")]
     public function listeLignes(LigneRepository $ligneRepository): Response
     {
-        $lignes = $ligneRepository->findBy(["initialisee" => true], ['nom' => 'ASC']);
+        $lignes = $ligneRepository->findBy([], ['nom' => 'ASC']);
 
         return $this->render("liste_lignes.html.twig", [
             "lignes" => $lignes
@@ -23,17 +23,29 @@ final class PlanLignesController extends AbstractController
     #[Route("/lignes/{id}", name: "app_ligne")]
     public function ligne(Ligne $ligne): Response
     {
-        $arrets = [];
-
-        foreach ($ligne->getLigneArretsByOrdre() as $ligneArret) {
-            $arrets[$ligneArret->getId()] = $ligneArret->getArret()->getNom();
+        if (!$ligne->isInitialisee()) {
+            return $this->redirectToRoute('app_liste_lignes');
         }
 
-        ksort($arrets);
+        $arretsDirection1 = [];
+        $arretsDirection2 = [];
+
+        foreach ($ligne->getLigneArrets() as $ligneArret) {
+            if ($ligneArret->getIndexDirection1() !== null) {
+                $arretsDirection1[$ligneArret->getIndexDirection1()] = $ligneArret->getArret()->getNom();
+            }
+            if ($ligneArret->getIndexDirection2() !== null) {
+                $arretsDirection2[$ligneArret->getIndexDirection2()] = $ligneArret->getArret()->getNom();
+            }
+        }
+
+        ksort($arretsDirection1);
+        ksort($arretsDirection2);
 
         return $this->render("ligne.html.twig", [
             "ligne" => $ligne,
-            "arrets" => $arrets
+            "arretsDirection1" => $arretsDirection1,
+            "arretsDirection2" => $arretsDirection2
         ]);
     }
 }

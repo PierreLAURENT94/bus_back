@@ -12,15 +12,82 @@
         </div>
         <div class="row">
             
-                {% for ligne in lignes %}
-                    <div class="col-sm-1">
+                
+                    {# <div class="col-sm-1">
                         <a href="{{ path('app_ligne', {'id': ligne.id}) }}">
                             <mark style="background-color: #{{ ligne.couleurHexa }};color: #{{ ligne.texteCouleurHexa }};">
                                 {{ ligne.nom }}
                             </mark>
                         </a>
-                    </div>
-                {% endfor %}
+                    </div> #}
+                    <table id="myTable">
+                        <thead>
+                            <tr>
+                                <th>Nom</th>
+                                <th>Initialsee</th>
+                                <th>Départ</th>
+                                <th>Arrivée</th>
+                                <th>Plan temps réel</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ligne in lignes %}
+                                <tr>
+                                    <td>
+                                        <mark style="background-color: #{{ ligne.couleurHexa }};color: #{{ ligne.texteCouleurHexa }};">
+                                            {{ ligne.nom }}
+                                        </mark>
+                                    </td>
+                                    <td>
+                                        {% if ligne.initialisee %}
+                                            Oui
+                                        {% else %}
+                                            Non
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if ligne.initialisee %}
+                                            {% for ligneArret in ligne.ligneArrets %}
+                                                {% if ligneArret.indexdirection1 == 0 and ligneArret.indexdirection1 is not null %}
+                                                    {{ ligneArret.arret.nom }}<small> • {{ ligneArret.arret.ville }}</small>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% else %}
+                                            ---
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if ligne.initialisee %}
+                                            {% for ligneArret in ligne.ligneArrets %}
+                                                {% if ligneArret.indexdirection2 == 0 and ligneArret.indexdirection2 is not null %}
+                                                    {{ ligneArret.arret.nom }}<small> • {{ ligneArret.arret.ville }}</small>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% else %}
+                                            ---
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if ligne.initialisee %}
+                                            <a href="{{ path('app_ligne', {'id': ligne.id}) }}" target="_blank">
+                                                <button class="small tertiary">Accéder</button>
+                                            </a>
+                                        {% else %}
+                                            <a>
+                                                <button class="small" disabled>Accéder</button>
+                                            </a>
+                                        {% endif %}
+                                        
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <script>
+                        let table = new DataTable('#myTable', {
+                            order: [[1, 'desc']],
+                        });
+                    </script>
         </div>
     </div>
 </div>

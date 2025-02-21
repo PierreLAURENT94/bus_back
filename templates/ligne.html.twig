@@ -105,7 +105,7 @@
         { x: 450, y: 262, color: "red" }
     ];
     var stops = [
-        {% for arret in arrets %}
+        {% for arret in arretsDirection1 %}
             "{{ arret }}",
         {% endfor %}
     ];
@@ -117,7 +117,7 @@
         plan("myCanvas",busArray,stops, "#{{ ligne.couleurHexa }}", "{{ ligne.nom }}");
     }
 
-    setInterval(moveBuses, 100);
+    setInterval(moveBuses, 10);
     plan("myCanvas",busArray,stops, "#{{ ligne.couleurHexa }}", "{{ ligne.nom }}");
 </script>
 </div>

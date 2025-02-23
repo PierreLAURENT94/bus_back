@@ -1,94 +1,117 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Liste des lignes{% endblock %}
+{% block title %}
+    {% if all %}
+        Liste des lignes de bus
+    {% else %}
+        Liste des lignes de bus surveillées
+    {% endif %}
+{% endblock %}
 
 {% block body %}
-<div class="example-wrapper">
-    <div class="container">
-        <div class="row">
-            <div class="col-sm-12">
-                <h1>Liste des lignes :</h1>
-            </div>
-        </div>
-        <div class="row">
-            
-                
-                    {# <div class="col-sm-1">
-                        <a href="{{ path('app_ligne', {'id': ligne.id}) }}">
-                            <mark style="background-color: #{{ ligne.couleurHexa }};color: #{{ ligne.texteCouleurHexa }};">
-                                {{ ligne.nom }}
-                            </mark>
-                        </a>
-                    </div> #}
-                    <table id="myTable">
-                        <thead>
-                            <tr>
-                                <th>Nom</th>
-                                <th>Initialsee</th>
-                                <th>Départ</th>
-                                <th>Arrivée</th>
-                                <th>Plan temps réel</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for ligne in lignes %}
-                                <tr>
-                                    <td>
-                                        <mark style="background-color: #{{ ligne.couleurHexa }};color: #{{ ligne.texteCouleurHexa }};">
-                                            {{ ligne.nom }}
-                                        </mark>
-                                    </td>
-                                    <td>
-                                        {% if ligne.initialisee %}
-                                            Oui
-                                        {% else %}
-                                            Non
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if ligne.initialisee %}
-                                            {% for ligneArret in ligne.ligneArrets %}
-                                                {% if ligneArret.indexdirection1 == 0 and ligneArret.indexdirection1 is not null %}
-                                                    {{ ligneArret.arret.nom }}<small> • {{ ligneArret.arret.ville }}</small>
-                                                {% endif %}
-                                            {% endfor %}
-                                        {% else %}
-                                            ---
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if ligne.initialisee %}
-                                            {% for ligneArret in ligne.ligneArrets %}
-                                                {% if ligneArret.indexdirection2 == 0 and ligneArret.indexdirection2 is not null %}
-                                                    {{ ligneArret.arret.nom }}<small> • {{ ligneArret.arret.ville }}</small>
-                                                {% endif %}
-                                            {% endfor %}
-                                        {% else %}
-                                            ---
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if ligne.initialisee %}
-                                            <a href="{{ path('app_ligne', {'id': ligne.id}) }}" target="_blank">
-                                                <button class="small tertiary">Accéder</button>
-                                            </a>
-                                        {% else %}
-                                            <a>
-                                                <button class="small" disabled>Accéder</button>
-                                            </a>
-                                        {% endif %}
-                                        
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    <script>
-                        let table = new DataTable('#myTable', {
-                            order: [[1, 'desc']],
-                        });
-                    </script>
+    <div class="row">
+        <div class="col-sm-12">
+        {% if all %}
+            <h1>Liste de toutes les lignes de bus 
+                <small><a href="{{ path('app_liste_lignes') }}">Voir uniquement les lignes de bus initialisées et surveillées</a></small>
+            </h1>
+        {% else %}
+            <h1>Liste des lignes de bus initialisées et surveillées 
+                <small><a href="{{ path('app_liste_lignes_all') }}">Voir toutes les lignes</a></small>
+            </h1>
+        {% endif %}
         </div>
     </div>
-</div>
+    <div class="row">
+        <table id="myTable">
+            <thead>
+                <tr>
+                    <th>Nom de la ligne</th>
+                    <th>Ligne initialisée</th>
+                    <th>Arrêt de départ</th>
+                    <th>Arrêt d'arrivée</th>
+                    <th>Liste des arrêts</th>
+                    <th>Plan temps réel</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ligne in lignes %}
+                    <tr>
+                        <td>
+                            {% if ligne.nom|slice(0, 1) == 'N' %}
+                                <span class="icon-noctilien" style="font-size: x-large;"></span>
+                            {% elseif ligne.nom|number_format >= 20 and ligne.nom|number_format <= 599 %}
+                                <span class="icon-bus" style="font-size: x-large;"></span>
+                            {% endif %}
+                            <mark style="background-color: #{{ ligne.couleurHexa }};color: #{{ ligne.texteCouleurHexa }};font-size: large;">
+                                {{ ligne.nom }}
+                            </mark>
+                        </td>
+                        <td>
+                            {% if ligne.initialisee %}
+                                Oui
+                            {% else %}
+                                Non
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if ligne.initialisee %}
+                                {% for ligneArret in ligne.ligneArrets %}
+                                    {% if ligneArret.indexdirection1 == 0 and ligneArret.indexdirection1 is not null %}
+                                        {{ ligneArret.arret.nom }}<small> • {{ ligneArret.arret.ville }}</small>
+                                    {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                ---
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if ligne.initialisee %}
+                                {% for ligneArret in ligne.ligneArrets %}
+                                    {% if ligneArret.indexdirection2 == 0 and ligneArret.indexdirection2 is not null %}
+                                        {{ ligneArret.arret.nom }}<small> • {{ ligneArret.arret.ville }}</small>
+                                    {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                ---
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if ligne.ligneArrets[0] is defined %}
+                                <small>{{ ligne.ligneArrets[0].arret.nom }}</small>
+                            {% endif %}
+                            {% if ligne.ligneArrets[1] is defined %}
+                                ,
+                                <small>{{ ligne.ligneArrets[1].arret.nom }}</small>
+                            {% endif %}
+                            ...
+                        </td>
+                        <td>
+                            {% if ligne.initialisee %}
+                                <a href="{{ path('app_ligne', {'id': ligne.id}) }}" target="_blank">
+                                    <button class="small tertiary">Accéder</button>
+                                </a>
+                            {% else %}
+                                <a>
+                                    <button class="small" disabled>Accéder</button>
+                                </a>
+                            {% endif %}
+                        </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <script>
+            let table = new DataTable('#myTable', {
+                {% if all %}
+                    order: [[1, 'desc']],
+                {% else %}
+                    order: [[0, 'asc']],
+                {% endif %}
+                language: {
+                    url: '/libs/datatables/fr-FR.json',
+                }
+            });
+        </script>
+    </div>
 {% endblock %}

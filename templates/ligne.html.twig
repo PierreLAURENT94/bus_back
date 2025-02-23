@@ -6,7 +6,13 @@
     <div class="row">
         <div class="col-sm-12">
             <h1>
-                Bus <mark style="background-color: #{{ ligne.couleurHexa }};color: #{{ ligne.texteCouleurHexa }};">
+                Plan temps réel du
+                {% if ligne.nom|slice(0, 1) == 'N' %}
+                    noctilien
+                {% elseif ligne.nom|number_format >= 20 and ligne.nom|number_format <= 599 %}
+                    bus
+                {% endif %}
+                <mark style="background-color: #{{ ligne.couleurHexa }};color: #{{ ligne.texteCouleurHexa }};">
                     {{ ligne.nom }}
                 </mark>
                 <small><a href="{{ path('app_liste_lignes') }}">Retour à la liste des lignes de bus</a></small>
@@ -16,23 +22,32 @@
     <div class="row">
         <div class="col-sm-12">
             <div class="collapse">
-                <input type="checkbox" id="collapse-section1" checked aria-hidden="true">
-                <label for="collapse-section1" aria-hidden="true">Collapse section 1</label>
+                <input type="checkbox" id="collapse-direction1" checked aria-hidden="true">
+                <label for="collapse-direction1" aria-hidden="true">
+                    <b>{{ arretsDirection1|first }} → {{ arretsDirection1|last }}</b>
+                </label>
                 <div>
-                    <p>This is the first section of the collapse</p>
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="scroll" style="overflow-x: auto;border:5px solid #000000;background-color: #feeccd;">
+                                <canvas id="canvas-direction1" height="300"></canvas>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <input type="checkbox" id="collapse-section2" aria-hidden="true">
-                <label for="collapse-section2" aria-hidden="true">Collapse section 2</label>
+                <input type="checkbox" id="collapse-direction2" checked aria-hidden="true">
+                <label for="collapse-direction2" aria-hidden="true">
+                    <b>{{ arretsDirection2|first }} → {{ arretsDirection2|last }}</b>
+                </label>
                 <div>
-                    <p>This is the second section of the collapse</p>
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="scroll" style="overflow-x: auto;border:5px solid #000000;background-color: #feeccd;">
+                                <canvas id="canvas-direction2" height="300"></canvas>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-sm-12">
-            <div class="scroll" style="height: 100%; overflow-x: auto;border:5px solid #000000;background-color: #feeccd;">
-                <canvas id="myCanvas" height="300"></canvas>
             </div>
         </div>
     </div>
@@ -46,11 +61,11 @@
             context.clearRect(0, 0, canvas.width, canvas.height);
             
             // Draw "BUS 113" at the top left corner
-            context.fillStyle = ligneColor; // Text color
+            {# context.fillStyle = ligneColor; // Text color
             context.font = "35px Arial"; // Font style
             context.globalAlpha = 0.5; // Set opacity to 50%
             context.fillText("BUS "+ ligneNum, 10, 35); // Draw text
-            context.globalAlpha = 1; // Set opacity to 50%
+            context.globalAlpha = 1; // Set opacity to 50% #}
 
             // Draw a bus line
             context.beginPath();
@@ -122,8 +137,14 @@
             { x: 250, y: 262, color: "blue" },
             { x: 450, y: 262, color: "red" }
         ];
-        var stops = [
+        var stopsDirection1 = [
             {% for arret in arretsDirection1 %}
+                "{{ arret }}",
+            {% endfor %}
+        ];
+
+        var stopsDirection2 = [
+            {% for arret in arretsDirection2 %}
                 "{{ arret }}",
             {% endfor %}
         ];
@@ -132,10 +153,12 @@
             busArray.forEach(bus => {
                 bus.x += Math.floor(Math.random() * 4) ;
             });
-            plan("myCanvas",busArray,stops, "#{{ ligne.couleurHexa }}", "{{ ligne.nom }}");
+            plan("canvas-direction1",busArray,stopsDirection1, "#{{ ligne.couleurHexa }}", "{{ ligne.nom }} : {{ arretsDirection1|first }} → {{ arretsDirection1|last }}");
+            plan("canvas-direction2",busArray,stopsDirection2, "#{{ ligne.couleurHexa }}", "{{ ligne.nom }} : {{ arretsDirection2|first }} → {{ arretsDirection2|last }}");
         }
 
         setInterval(moveBuses, 10);
-        plan("myCanvas",busArray,stops, "#{{ ligne.couleurHexa }}", "{{ ligne.nom }}");
+        plan("canvas-direction1",busArray,stopsDirection1, "#{{ ligne.couleurHexa }}", "{{ ligne.nom }} : {{ arretsDirection1|first }} → {{ arretsDirection1|last }}");
+        plan("canvas-direction2",busArray,stopsDirection2, "#{{ ligne.couleurHexa }}", "{{ ligne.nom }} : {{ arretsDirection2|first }} → {{ arretsDirection2|last }}");
     </script>
 {% endblock %}

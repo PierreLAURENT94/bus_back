@@ -42,12 +42,32 @@ final class PlanLignesController extends AbstractController
         $arretsDirection1 = [];
         $arretsDirection2 = [];
 
+        // foreach ($ligne->getLigneArrets() as $ligneArret) {
+        //     if(count($ligneArret->getEnregistrementsDirection2())){
+        //         dump($ligneArret->getArret()->getNom() . " • " . $ligneArret->getEnregistrementsDirection2()[0]->getProchainPassage()->format("H:i"));
+        //     }
+        // }
+        // die();
         foreach ($ligne->getLigneArrets() as $ligneArret) {
             if ($ligneArret->getIndexDirection1() !== null) {
-                $arretsDirection1[$ligneArret->getIndexDirection1()] = $ligneArret->getArret()->getNom();
+                if(count($ligneArret->getEnregistrementsDirection1())){
+                    $now = new \DateTime();
+                    $interval = $now->diff($ligneArret->getEnregistrementsDirection1()[0]->getProchainPassage());
+                    $arretsDirection1[$ligneArret->getIndexDirection1()] = $ligneArret->getArret()->getNom() . " • " . $interval->format('%i min %s sec');
+                } else {
+                    $arretsDirection1[$ligneArret->getIndexDirection1()] = $ligneArret->getArret()->getNom() . " • " . $ligneArret->getArret()->getVille();
+                }
             }
             if ($ligneArret->getIndexDirection2() !== null) {
-                $arretsDirection2[$ligneArret->getIndexDirection2()] = $ligneArret->getArret()->getNom();
+                $arretsDirection2[$ligneArret->getIndexDirection2()] = $ligneArret->getArret()->getNom() . " • " . $ligneArret->getArret()->getVille();
+                if(count($ligneArret->getEnregistrementsDirection2())){
+                    $now = new \DateTime();
+                    $interval = $now->diff($ligneArret->getEnregistrementsDirection2()[0]->getProchainPassage());
+
+                    $arretsDirection2[$ligneArret->getIndexDirection2()] = $ligneArret->getArret()->getNom() . " • " . $interval->format('%i min %s sec');
+                } else {
+                    $arretsDirection2[$ligneArret->getIndexDirection2()] = $ligneArret->getArret()->getNom() . " • " . $ligneArret->getArret()->getVille();
+                }
             }
         }
 

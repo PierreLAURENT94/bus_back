@@ -45,7 +45,7 @@ class Test2Command extends Command
         foreach ($ligneArrets as $ligneArret) {
             $io->text($ligneArret->getArret()->getNomId());
             $arretId = explode(':',  $ligneArret->getArret()->getNomId())[1];
-            $monitoringRef = rawurlencode("STIF:StopPoint:Q:" . $arretId . ":");
+            $monitoringRef = rawurlencode("STIF:StopPoint:Q:" . $arretId . ":");      
             $lineRef = rawurlencode("STIF:Line::" . $ligne->getNomId() . ":");
             $url = "https://prim.iledefrance-mobilites.fr/marketplace/stop-monitoring?MonitoringRef={$monitoringRef}&LineRef={$lineRef}";
             $urls[] = $url;

@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Enregistrement;
+use App\Entity\LigneArret;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -40,4 +41,26 @@ class EnregistrementRepository extends ServiceEntityRepository
 //            ->getOneOrNullResult()
 //        ;
 //    }
+
+    public function findLatestEnregistrementDirection1ForLigneArret(LigneArret $ligneArret): ?Enregistrement
+    {
+        return $this->createQueryBuilder('e')
+            ->andWhere('e.ligneArretDirection1 = :ligneArret')
+            ->setParameter('ligneArret', $ligneArret)
+            ->orderBy('e.dateTime', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    public function findLatestEnregistrementDirection2ForLigneArret(LigneArret $ligneArret): ?Enregistrement
+    {
+        return $this->createQueryBuilder('e')
+            ->andWhere('e.ligneArretDirection2 = :ligneArret')
+            ->setParameter('ligneArret', $ligneArret)
+            ->orderBy('e.dateTime', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
 }

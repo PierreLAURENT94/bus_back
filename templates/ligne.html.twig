@@ -24,7 +24,7 @@
             <div class="collapse">
                 <input type="checkbox" id="collapse-direction1" checked aria-hidden="true">
                 <label for="collapse-direction1" aria-hidden="true">
-                    <b>{{ arretsDirection1|first }} → {{ arretsDirection1|last }}</b>
+                    <b>{{ arretsDirection1|first["nom"] }} → {{ arretsDirection1|last["nom"] }}</b>
                 </label>
                 <div>
                     <div class="row">
@@ -37,7 +37,7 @@
                 </div>
                 <input type="checkbox" id="collapse-direction2" checked aria-hidden="true">
                 <label for="collapse-direction2" aria-hidden="true">
-                    <b>{{ arretsDirection2|first }} → {{ arretsDirection2|last }}</b>
+                    <b>{{ arretsDirection2|first["nom"] }} → {{ arretsDirection2|last["nom"] }}</b>
                 </label>
                 <div>
                     <div class="row">
@@ -89,8 +89,15 @@
                 context.translate(x, 240); // Translate to the text position
                 context.rotate(-45 * Math.PI / 180); // Rotate 45 degrees counterclockwise
                 var maxLength = 30; // Maximum number of characters to display
-                var stopName = stops[i].length > maxLength ? stops[i].substring(0, maxLength) + "..." : stops[i];
+                let nom = stops[i].nom + " • " + stops[i].ville;
+                var stopName = nom.length > maxLength ? nom.substring(0, maxLength) + "..." : nom;
                 context.fillText(stopName, 0, 0); // Draw text
+                context.fillStyle = "#AAAAAA"; // Text color for prochainPassage
+                next = "N/A";
+                if(stops[i].prochainPassage) {
+                    next = stops[i].prochainPassage;
+                }
+                context.fillText(next, 0, 20); // Draw prochainPassage text
                 context.restore(); // Restore the context to its original state
             }
 
@@ -139,13 +146,21 @@
         ];
         var stopsDirection1 = [
             {% for arret in arretsDirection1 %}
-                "{{ arret }}",
+                {
+                    "nom": "{{ arret['nom'] }}",
+                    "ville": "{{ arret['ville'] }}",
+                    "prochainPassage": "{{ arret['prochainPassage'] }}"
+                },
             {% endfor %}
         ];
 
         var stopsDirection2 = [
             {% for arret in arretsDirection2 %}
-                "{{ arret }}",
+                {
+                    "nom": "{{ arret['nom'] }}",
+                    "ville": "{{ arret['ville'] }}",
+                    "prochainPassage": "{{ arret['prochainPassage'] }}"
+                },
             {% endfor %}
         ];
 
@@ -153,12 +168,12 @@
             busArray.forEach(bus => {
                 bus.x += Math.floor(Math.random() * 4) ;
             });
-            plan("canvas-direction1",busArray,stopsDirection1, "#{{ ligne.couleurHexa }}", "{{ ligne.nom }} : {{ arretsDirection1|first }} → {{ arretsDirection1|last }}");
-            plan("canvas-direction2",busArray,stopsDirection2, "#{{ ligne.couleurHexa }}", "{{ ligne.nom }} : {{ arretsDirection2|first }} → {{ arretsDirection2|last }}");
+            plan("canvas-direction1",busArray,stopsDirection1, "#{{ ligne.couleurHexa }}", "{{ ligne.nom }} : {{ arretsDirection1|first["nom"] }} → {{ arretsDirection1|last["nom"] }}");
+            plan("canvas-direction2",busArray,stopsDirection2, "#{{ ligne.couleurHexa }}", "{{ ligne.nom }} : {{ arretsDirection2|first["nom"] }} → {{ arretsDirection2|last["nom"] }}");
         }
 
         setInterval(moveBuses, 10);
-        plan("canvas-direction1",busArray,stopsDirection1, "#{{ ligne.couleurHexa }}", "{{ ligne.nom }} : {{ arretsDirection1|first }} → {{ arretsDirection1|last }}");
-        plan("canvas-direction2",busArray,stopsDirection2, "#{{ ligne.couleurHexa }}", "{{ ligne.nom }} : {{ arretsDirection2|first }} → {{ arretsDirection2|last }}");
+        plan("canvas-direction1",busArray,stopsDirection1, "#{{ ligne.couleurHexa }}", "{{ ligne.nom }} : {{ arretsDirection1|first["nom"] }} → {{ arretsDirection1|last["nom"] }}");
+        plan("canvas-direction2",busArray,stopsDirection2, "#{{ ligne.couleurHexa }}", "{{ ligne.nom }} : {{ arretsDirection2|first["nom"] }} → {{ arretsDirection2|last["nom"] }}");
     </script>
 {% endblock %}

@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Ligne;
 use App\Repository\EnregistrementRepository;
 use App\Repository\LigneRepository;
+use DateTime;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -43,7 +44,6 @@ final class PlanLignesController extends AbstractController
         $arretsDirection1 = [];
         $arretsDirection2 = [];
 
-        $now = new \DateTime();
         foreach ($ligne->getLigneArrets() as $ligneArret) {
             if ($ligneArret->getIndexDirection1() !== null) {
                 $arretsDirection1[$ligneArret->getIndexDirection1()]["nom"] = $ligneArret->getArret()->getNom();
@@ -51,10 +51,11 @@ final class PlanLignesController extends AbstractController
                 
                 $enregistrement = $enregistrementRepository->findLatestEnregistrementDirection1ForLigneArret($ligneArret);
                 if ($enregistrement) {
-                    $interval = $now->diff($enregistrement->getProchainPassage());
-                    $arretsDirection1[$ligneArret->getIndexDirection1()]["prochainPassage"] = $interval->format('%i min %s sec');
+                    $arretsDirection1[$ligneArret->getIndexDirection1()]["prochainPassageStr"] = $enregistrement->getTempsVersProchainPassage()->format('%i min');
+                    $arretsDirection1[$ligneArret->getIndexDirection1()]["prochainPassage"] = (new DateTime())->setTimeStamp(0)->add($enregistrement->getTempsVersProchainPassage())->getTimeStamp();
                 }
                 else {
+                    $arretsDirection1[$ligneArret->getIndexDirection1()]["prochainPassageStr"] = null;
                     $arretsDirection1[$ligneArret->getIndexDirection1()]["prochainPassage"] = null;
                 }
             }
@@ -64,10 +65,11 @@ final class PlanLignesController extends AbstractController
                 
                 $enregistrement = $enregistrementRepository->findLatestEnregistrementDirection2ForLigneArret($ligneArret);
                 if ($enregistrement) {
-                    $interval = $now->diff($enregistrement->getProchainPassage());
-                    $arretsDirection2[$ligneArret->getIndexDirection2()]["prochainPassage"] = $interval->format('%i min %s sec');
+                    $arretsDirection2[$ligneArret->getIndexDirection2()]["prochainPassageStr"] = $enregistrement->getTempsVersProchainPassage()->format('%i min');
+                    $arretsDirection2[$ligneArret->getIndexDirection2()]["prochainPassage"] = (new DateTime())->setTimeStamp(0)->add($enregistrement->getTempsVersProchainPassage())->getTimeStamp();
                 }
                 else {
+                    $arretsDirection2[$ligneArret->getIndexDirection2()]["prochainPassageStr"] = null;
                     $arretsDirection2[$ligneArret->getIndexDirection2()]["prochainPassage"] = null;
                 }
             }
@@ -76,10 +78,34 @@ final class PlanLignesController extends AbstractController
         ksort($arretsDirection1);
         ksort($arretsDirection2);
 
+        $busArrayDirection1 = [-35];
+        foreach ($arretsDirection1 as $key => $arret) {
+            if($arret["prochainPassage"] === null || $key === 0) {
+                continue;
+            }
+            $pos = 55 + ($key - 1) * 150;
+            if ($arret["prochainPassage"] < $arretsDirection1[$key - 1]["prochainPassage"]) {
+                $busArrayDirection1[] = $pos;
+            }
+        }
+
+        $busArrayDirection2 = [-35];
+        foreach ($arretsDirection2 as $key => $arret) {
+            if($arret["prochainPassage"] === null || $key === 0) {
+                continue;
+            }
+            $pos = 55 + ($key - 1) * 150;
+            if ($arret["prochainPassage"] < $arretsDirection2[$key - 1]["prochainPassage"]) {
+                $busArrayDirection2[] = $pos;
+            }
+        }
+
         return $this->render("ligne.html.twig", [
             "ligne" => $ligne,
             "arretsDirection1" => $arretsDirection1,
-            "arretsDirection2" => $arretsDirection2
+            "arretsDirection2" => $arretsDirection2,
+            "busArrayDirection1" => $busArrayDirection1,
+            "busArrayDirection2" => $busArrayDirection2
         ]);
     }
 }

@@ -70,33 +70,33 @@ class SetupGtfsCommand extends Command
         // $this->CleanEntityInutile($io);
 
         $lignesAInitialiser = [
-            [
-                "nom" => "113",
-                "depart" => "Nogent-sur-Marne",
-                "arrivee" => "Terre Ciel"
-            ],
+            // [
+            //     "nom" => "113",
+            //     "depart" => "Nogent-sur-Marne",
+            //     "arrivee" => "Terre Ciel"
+            // ],
             [
                 "nom" => "220",
                 "depart" => "Bry-sur-Marne",
                 "arrivee" => "Torcy"
             ],
-            [
-                "nom" => "213",
-                "depart1" => "IDFM:424467", // Chelles - Gournay RER
-                "arrivee1" => "IDFM:463385", // Le Village #1
-                "depart2" => "IDFM:463386", // Le Village #2
-                "arrivee2" => "IDFM:424467" // Chelles - Gournay RER
-            ],
-            [
-                "nom" => "N34",
-                "depart1" => "IDFM:22801", // Gare de Lyon - Diderot
-                "arrivee1" => "IDFM:41446", // Gare de Torcy
-                "depart2" => "IDFM:41446", // Gare de Torcy
-                "arrivee2" => "IDFM:421409" // Gare de Lyon - Maison de la RATP
-            ]
+            // [
+            //     "nom" => "213",
+            //     "depart1" => "IDFM:424467", // Chelles - Gournay RER
+            //     "arrivee1" => "IDFM:463385", // Le Village #1
+            //     "depart2" => "IDFM:463386", // Le Village #2
+            //     "arrivee2" => "IDFM:424467" // Chelles - Gournay RER
+            // ],
+            // [
+            //     "nom" => "N34",
+            //     "depart1" => "IDFM:22801", // Gare de Lyon - Diderot
+            //     "arrivee1" => "IDFM:41446", // Gare de Torcy
+            //     "depart2" => "IDFM:41446", // Gare de Torcy
+            //     "arrivee2" => "IDFM:421409" // Gare de Lyon - Maison de la RATP
+            // ]
         ];
 
-        $this->test($io, $lignesAInitialiser);
+        // $this->test($io, $lignesAInitialiser);
 
         return Command::SUCCESS;
     }

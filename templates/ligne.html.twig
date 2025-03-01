@@ -137,19 +137,39 @@
         }
         
 
-        var busArray = [
+        var busArrayDirection1 = [
+            {% for bus in busArrayDirection1 %}
+                {
+                    x: {{ bus }},
+                    y: 262,
+                    color: "green"
+                },
+            {% endfor %}
+        ];
+
+        var busArrayDirection2 = [
+            {% for bus in busArrayDirection2 %}
+                {
+                    x: {{ bus }},
+                    y: 262,
+                    color: "green"
+                },
+            {% endfor %}
+        ];
+
+        {# var busArray = [
             { x: 50, y: 262, color: "green" },
             { x: 150, y: 262, color: "cyan" },
             { x: 250, y: 262, color: "yellow" },
             { x: 250, y: 262, color: "blue" },
             { x: 450, y: 262, color: "red" }
-        ];
+        ]; #}
         var stopsDirection1 = [
             {% for arret in arretsDirection1 %}
                 {
                     "nom": "{{ arret['nom'] }}",
                     "ville": "{{ arret['ville'] }}",
-                    "prochainPassage": "{{ arret['prochainPassage'] }}"
+                    "prochainPassage": "{{ arret['prochainPassageStr'] }}"
                 },
             {% endfor %}
         ];
@@ -159,12 +179,12 @@
                 {
                     "nom": "{{ arret['nom'] }}",
                     "ville": "{{ arret['ville'] }}",
-                    "prochainPassage": "{{ arret['prochainPassage'] }}"
+                    "prochainPassage": "{{ arret['prochainPassageStr'] }}"
                 },
             {% endfor %}
         ];
 
-        function moveBuses() {
+        {# function moveBuses() {
             busArray.forEach(bus => {
                 bus.x += Math.floor(Math.random() * 4) ;
             });
@@ -172,8 +192,12 @@
             plan("canvas-direction2",busArray,stopsDirection2, "#{{ ligne.couleurHexa }}", "{{ ligne.nom }} : {{ arretsDirection2|first["nom"] }} → {{ arretsDirection2|last["nom"] }}");
         }
 
-        setInterval(moveBuses, 10);
-        plan("canvas-direction1",busArray,stopsDirection1, "#{{ ligne.couleurHexa }}", "{{ ligne.nom }} : {{ arretsDirection1|first["nom"] }} → {{ arretsDirection1|last["nom"] }}");
-        plan("canvas-direction2",busArray,stopsDirection2, "#{{ ligne.couleurHexa }}", "{{ ligne.nom }} : {{ arretsDirection2|first["nom"] }} → {{ arretsDirection2|last["nom"] }}");
+        setInterval(moveBuses, 10); #}
+        plan("canvas-direction1",busArrayDirection1,stopsDirection1, "#{{ ligne.couleurHexa }}", "{{ ligne.nom }} : {{ arretsDirection1|first["nom"] }} → {{ arretsDirection1|last["nom"] }}");
+        plan("canvas-direction2",busArrayDirection2,stopsDirection2, "#{{ ligne.couleurHexa }}", "{{ ligne.nom }} : {{ arretsDirection2|first["nom"] }} → {{ arretsDirection2|last["nom"] }}");
+
+        setTimeout(function() {
+            location.reload();
+        }, 30000);
     </script>
 {% endblock %}

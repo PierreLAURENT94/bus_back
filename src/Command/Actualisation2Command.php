@@ -3,6 +3,7 @@
 namespace App\Command;
 
 use App\Entity\Enregistrement;
+use App\Entity\EnregistrementGroup;
 use App\Repository\LigneRepository;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -41,8 +42,17 @@ class Actualisation2Command extends Command
         $requetesIDFM = [];
         $multiHandle = curl_multi_init();
 
+        $enregistrementGroupList = [];
+        $dateActuelle = new \DateTime();
+
         foreach ($lignes as $ligne) {
             $ligneArrets = $ligne->getLigneArrets();
+            $enregistrementGroupList[$ligne->getId()] = new EnregistrementGroup();
+            $enregistrementGroupList[$ligne->getId()]
+                ->setHeure($dateActuelle)
+                ->setLigne($ligne);
+            $this->entityManager->persist($enregistrementGroupList[$ligne->getId()]);
+
             foreach ($ligneArrets as $ligneArret) {
                 $arretId = explode(':', $ligneArret->getArret()->getNomId())[1];
                 $monitoringRef = rawurlencode("STIF:StopPoint:Q:" . $arretId . ":");
@@ -69,8 +79,6 @@ class Actualisation2Command extends Command
             }
         }
 
-        $dateActuelle = new \DateTime();
-
         // Exécution des requêtes en parallèle
         do {
             $status = curl_multi_exec($multiHandle, $active);
@@ -84,7 +92,9 @@ class Actualisation2Command extends Command
             curl_multi_remove_handle($multiHandle, $requeteIDFM["sessionCurl"]);
             curl_close($requeteIDFM["sessionCurl"]);
 
-            // if($requeteIDFM["ligneArret"]->getArret()->getNom() === "Les Prévoyants") {
+            // if($requeteIDFM["ligneArret"]->getLigne()->getNom() === "213") {
+            //     dump($responseDecode);
+            //     continue;
             //     $responseTimestamp = $responseDecode['Siri']['ServiceDelivery']['StopMonitoringDelivery'][0]['ResponseTimestamp'];
             //     $expectedDepartureTime =$responseDecode['Siri']['ServiceDelivery']['StopMonitoringDelivery'][0]['MonitoredStopVisit'][0]['MonitoredVehicleJourney']['MonitoredCall']['ExpectedDepartureTime'];
             //     $heureIDFM = new \DateTime($responseTimestamp);
@@ -98,38 +108,54 @@ class Actualisation2Command extends Command
 
             try {
                 $monitoredStopVisit = $responseDecode['Siri']['ServiceDelivery']['StopMonitoringDelivery'][0]['MonitoredStopVisit'];
-                // foreach ($monitoredStopVisit as $monitoredStopVisit) {
-                //     $prochainPassage = $monitoredStopVisit['MonitoredVehicleJourney']['MonitoredCall']['ExpectedDepartureTime'];
-                //     $direction = $monitoredStopVisit['MonitoredVehicleJourney']['DirectionName'][0]['value'];
-                // }
-                // $prochainPassage = new \DateTime($monitoredStopVisit[0]['MonitoredVehicleJourney']['MonitoredCall']['ExpectedDepartureTime']);
 
                 $responseTimestamp = $responseDecode['Siri']['ServiceDelivery']['StopMonitoringDelivery'][0]['ResponseTimestamp'];
-                $expectedDepartureTime =$responseDecode['Siri']['ServiceDelivery']['StopMonitoringDelivery'][0]['MonitoredStopVisit'][0]['MonitoredVehicleJourney']['MonitoredCall']['ExpectedDepartureTime'];
+
+                $expectedDepartureTime = $monitoredStopVisit[0]['MonitoredVehicleJourney']['MonitoredCall']['ExpectedDepartureTime'];
                 $heureIDFM = new \DateTime($responseTimestamp);
                 $heureExpectedDeparture = new \DateTime($expectedDepartureTime);
                 $tempsVersprochainPassage = $heureIDFM->diff($heureExpectedDeparture);
 
                 $direction = $monitoredStopVisit[0]['MonitoredVehicleJourney']['DirectionName'][0]['value'];
             } catch (\Throwable $th) {
-                continue; // pas de prochain passage
+                continue;
+            }
+
+            try {
+                $monitoredStopVisit = $responseDecode['Siri']['ServiceDelivery']['StopMonitoringDelivery'][0]['MonitoredStopVisit'];
+
+                $responseTimestamp = $responseDecode['Siri']['ServiceDelivery']['StopMonitoringDelivery'][0]['ResponseTimestamp'];
+
+                $expectedDepartureTime = $monitoredStopVisit[1]['MonitoredVehicleJourney']['MonitoredCall']['ExpectedDepartureTime'];
+                $heureIDFM = new \DateTime($responseTimestamp);
+                $heureExpectedDeparture = new \DateTime($expectedDepartureTime);
+                $tempsVersprochainPassage2 = $heureIDFM->diff($heureExpectedDeparture);
+            } catch (\Throwable $th) {
+                $tempsVersprochainPassage2 = null;
             }
 
             $enregistrement = new Enregistrement();
             $enregistrement
-                ->setDateTime($dateActuelle)
-                ->setTempsVersProchainPassage($tempsVersprochainPassage);
+                ->setEnregistrementGroup($enregistrementGroupList[$requeteIDFM["ligneArret"]->getLigne()->getId()])
+                ->setTempsVersProchainPassage($tempsVersprochainPassage)
+                ->setTempsVersProchainPassage2($tempsVersprochainPassage2);
             $this->entityManager->persist($enregistrement);
 
             switch ($direction) {
                 case 'Gare de Torcy':
+                case 'Le Village':
+                case 'Terre Ciel':
                     $requeteIDFM["ligneArret"]->addEnregistrementsDirection1($enregistrement);
                     $this->entityManager->persist($requeteIDFM["ligneArret"]);
                     break;
                 case 'Bry-sur-Marne RER':
+                case 'Gare de Chelles Gournay':
+                case 'Nogent-sur-Marne RER':  
                     $requeteIDFM["ligneArret"]->addEnregistrementsDirection2($enregistrement);
                     $this->entityManager->persist($requeteIDFM["ligneArret"]);
                     break;
+                default:
+                    dd($direction);
             }
         }
 

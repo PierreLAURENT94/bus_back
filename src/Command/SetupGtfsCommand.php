@@ -70,16 +70,16 @@ class SetupGtfsCommand extends Command
         // $this->CleanEntityInutile($io);
 
         $lignesAInitialiser = [
-            // [
-            //     "nom" => "113",
-            //     "depart" => "Nogent-sur-Marne",
-            //     "arrivee" => "Terre Ciel"
-            // ],
             [
-                "nom" => "220",
-                "depart" => "Bry-sur-Marne",
-                "arrivee" => "Torcy"
+                "nom" => "113",
+                "depart" => "Nogent-sur-Marne",
+                "arrivee" => "Terre Ciel"
             ],
+            // [
+            //     "nom" => "220",
+            //     "depart" => "Bry-sur-Marne",
+            //     "arrivee" => "Torcy"
+            // ],
             // [
             //     "nom" => "213",
             //     "depart1" => "IDFM:424467", // Chelles - Gournay RER
@@ -96,7 +96,7 @@ class SetupGtfsCommand extends Command
             // ]
         ];
 
-        // $this->test($io, $lignesAInitialiser);
+        $this->test($io, $lignesAInitialiser);
 
         return Command::SUCCESS;
     }

@@ -1,0 +1,78 @@
+@keyframes moveLoupe {
+    0% {
+        transform: matrix(0.636578, -0.170571, 0.170571, 0.636578, 0, 29.0716);
+    }
+    25% {
+        transform: matrix(0.636578, -0.170571, 0.170571, 0.636578, 20, 29.0716);
+    }
+    50% {
+        transform: matrix(0.636578, -0.170571, 0.170571, 0.636578, 26, 32);
+    }
+    75% {
+        transform: matrix(0.636578, -0.170571, 0.170571, 0.636578, 22, 25);
+    }
+    100% {
+        transform: matrix(0.636578, -0.170571, 0.170571, 0.636578, 0, 29.0716);
+    }
+}
+
+@keyframes color213 {
+    0% {
+        fill: #a0006e;
+    }
+    33% {
+        fill: #6e6e00;
+    }
+    66% {
+        fill: #ff1400;
+    }
+    100% {
+        fill: #a0006e;
+    }
+}
+
+@keyframes color220 {
+    0% {
+        fill: #ff1400;
+    }
+    33% {
+        fill: #a0006e;
+    }
+    66% {
+        fill: #6e6e00;
+    }
+    100% {
+        fill: #ff1400;
+    }
+}
+
+@keyframes color113 {
+    0% {
+        fill: #6e6e00;
+    }
+    33% {
+        fill: #ff1400;
+    }
+    66% {
+        fill: #a0006e;
+    }
+    100% {
+        fill: #6e6e00;
+    }
+}
+
+#g10 {
+    animation: moveLoupe 10s linear infinite;
+}
+
+#rect2-2-4-5 {
+    animation: color213 5s linear infinite;
+}
+
+#rect2-2-4-5-2 {
+    animation: color220 5s linear infinite;
+}
+
+#rect2-2-4 {
+    animation: color113 5s linear infinite;
+}

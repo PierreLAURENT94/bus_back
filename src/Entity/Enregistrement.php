@@ -14,9 +14,6 @@ class Enregistrement
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $dateTime = null;
-
     #[ORM\ManyToOne(inversedBy: 'enregistrementsDirection1')]
     private ?LigneArret $ligneArretDirection1 = null;
 
@@ -26,21 +23,15 @@ class Enregistrement
     #[ORM\Column(nullable: true)]
     private ?\DateInterval $tempsVersProchainPassage = null;
 
+    #[ORM\ManyToOne(inversedBy: 'enregistrements')]
+    private ?EnregistrementGroup $enregistrementGroup = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateInterval $tempsVersProchainPassage2 = null;
+
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function getDateTime(): ?\DateTimeInterface
-    {
-        return $this->dateTime;
-    }
-
-    public function setDateTime(\DateTimeInterface $dateTime): static
-    {
-        $this->dateTime = $dateTime;
-
-        return $this;
     }
 
     public function getLigneArretDirection1(): ?LigneArret
@@ -75,6 +66,30 @@ class Enregistrement
     public function setTempsVersProchainPassage(?\DateInterval $tempsVersProchainPassage): static
     {
         $this->tempsVersProchainPassage = $tempsVersProchainPassage;
+
+        return $this;
+    }
+
+    public function getEnregistrementGroup(): ?EnregistrementGroup
+    {
+        return $this->enregistrementGroup;
+    }
+
+    public function setEnregistrementGroup(?EnregistrementGroup $enregistrementGroup): static
+    {
+        $this->enregistrementGroup = $enregistrementGroup;
+
+        return $this;
+    }
+
+    public function getTempsVersProchainPassage2(): ?\DateInterval
+    {
+        return $this->tempsVersProchainPassage2;
+    }
+
+    public function setTempsVersProchainPassage2(?\DateInterval $tempsVersProchainPassage2): static
+    {
+        $this->tempsVersProchainPassage2 = $tempsVersProchainPassage2;
 
         return $this;
     }

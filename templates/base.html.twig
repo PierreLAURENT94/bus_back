@@ -8,6 +8,7 @@
         <title>{% block title %}Projet Bus{% endblock %}</title>
         {# <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text><text y=%221.3em%22 x=%220.2em%22 font-size=%2276%22 fill=%22%23fff%22>sf</text></svg>"> #}
         {% block stylesheets %}
+            {{ encore_entry_link_tags('app') }}
         {% endblock %}
         <style>
             span.icon-bus {
@@ -21,17 +22,35 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
         <script src="https://cdn.datatables.net/2.2.2/js/dataTables.js"></script>
         {% block javascripts %}
+            {{ encore_entry_script_tags('app') }}
         {% endblock %}
     </head>
     <body>
         <div class="container">
             <div class="row">
-                <div class="col-sm-12">
-                    <div class="card warning fluid">
-                        <h4 style="text-align: center"><span class="icon-alert"></span> Version preuve de concept <span class="icon-alert"></span></h4>
+                <div class="col-sm-4" style="text-align: center;">
+                    {% include 'logo.html.twig' %}
+                </div>
+                <div class="col-sm-8">
+                    <div class="card fluid">
+                        <h1>Visualisation en Temps Réel des Lignes de Bus - Île-de-France Mobilité</h1>
+                        <hr/>
+                        <p style="font-size: large;">
+                            Bienvenue ! <br/> <br/>
+                            Cette application vous permet de <b>suivre en temps réel l'état des lignes de bus</b> en Île-de-France.<br/>
+                            En utilisant l'API <b>OpenData</b> d'Île-de-France Mobilité, nous vous offrons la possibilité de:<br/>
+                        </p>
+                        <ul>
+                            <li style="font-size: large;">Visualiser la localisation supposée des bus</li>
+                            <li style="font-size: large;">Visualiser les horaires de passage prévus</li>
+                        </ul>
+                        <p style="font-size: large;">
+                            Planifiez vos trajets en toute simplicité et restez informé des changements directement depuis votre écran !<br/> <br/>
+                            Bonne navigation,<br/>
+                            Pierre LAURENT
+                        </p> 
                     </div>
                 </div>
-            </div>
             {% block body %}{% endblock %}
         </div>
         <footer>

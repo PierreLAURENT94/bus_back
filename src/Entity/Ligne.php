@@ -37,9 +37,16 @@ class Ligne
     #[ORM\Column]
     private ?bool $initialisee = null;
 
+    /**
+     * @var Collection<int, EnregistrementGroup>
+     */
+    #[ORM\OneToMany(targetEntity: EnregistrementGroup::class, mappedBy: 'ligne')]
+    private Collection $enregistrementGroups;
+
     public function __construct()
     {
         $this->ligneArrets = new ArrayCollection();
+        $this->enregistrementGroups = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -139,6 +146,36 @@ class Ligne
     public function setInitialisee(bool $initialisee): static
     {
         $this->initialisee = $initialisee;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, EnregistrementGroup>
+     */
+    public function getEnregistrementGroups(): Collection
+    {
+        return $this->enregistrementGroups;
+    }
+
+    public function addEnregistrementGroup(EnregistrementGroup $enregistrementGroup): static
+    {
+        if (!$this->enregistrementGroups->contains($enregistrementGroup)) {
+            $this->enregistrementGroups->add($enregistrementGroup);
+            $enregistrementGroup->setLigne($this);
+        }
+
+        return $this;
+    }
+
+    public function removeEnregistrementGroup(EnregistrementGroup $enregistrementGroup): static
+    {
+        if ($this->enregistrementGroups->removeElement($enregistrementGroup)) {
+            // set the owning side to null (unless already changed)
+            if ($enregistrementGroup->getLigne() === $this) {
+                $enregistrementGroup->setLigne(null);
+            }
+        }
 
         return $this;
     }
